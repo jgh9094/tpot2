@@ -12,7 +12,7 @@ def estimator_graph_individual_generator(
                                                 root_config_dict,
                                                 inner_config_dict=None,
                                                 leaf_config_dict=None,
-                                                max_size = np.inf, 
+                                                max_size = np.inf,
                                                 linear_pipeline = False,
                                                 **kwargs,
                                             ) :
@@ -23,40 +23,86 @@ def estimator_graph_individual_generator(
         while True:
             if n_nodes < max_size:
                     n_nodes += 1
-            
+
             for k in root_config_dict.keys():
-                
+
                 graph = nx.DiGraph()
                 root = create_node(config_dict={k:root_config_dict[k]})
                 graph.add_node(root)
-                
-                ind = GraphIndividual(    inner_config_dict=inner_config_dict,  
+
+                ind = GraphIndividual(    inner_config_dict=inner_config_dict,
                                                     leaf_config_dict=leaf_config_dict,
                                                     root_config_dict=root_config_dict,
                                                     initial_graph = graph,
 
-                                                    max_size = max_size, 
+                                                    max_size = max_size,
                                                     linear_pipeline = linear_pipeline,
 
                                                     **kwargs,
                                                     )
-                
+
                 starting_ops = []
                 if inner_config_dict is not None:
                     starting_ops.append(ind._mutate_insert_inner_node)
                 if leaf_config_dict is not None:
                     starting_ops.append(ind._mutate_insert_leaf)
-                
+
                 if len(starting_ops) > 0:
                     if n_nodes > 0:
                         for _ in range(np.random.randint(0,min(n_nodes,3))):
                             func = np.random.choice(starting_ops)
                             func()
 
-                
+
                 yield ind
 
-            
+def j_estimator_graph_individual_generator(
+                                                root_config_dict,
+                                                inner_config_dict=None,
+                                                leaf_config_dict=None,
+                                                max_size = np.inf,
+                                                linear_pipeline = False,
+                                                **kwargs,
+                                            ) :
+
+        while True:
+
+            # create a random root node with config dict
+            graph = nx.DiGraph()
+            root = create_node(config_dict=root_config_dict)
+            graph.add_node(root)
+
+            ind = GraphIndividual(    inner_config_dict=inner_config_dict,
+                                                leaf_config_dict=leaf_config_dict,
+                                                root_config_dict=root_config_dict,
+                                                initial_graph = graph,
+
+                                                max_size = max_size,
+                                                linear_pipeline = linear_pipeline,
+
+                                                **kwargs,
+                                                )
+
+            starting_ops = []
+            if inner_config_dict is not None:
+                starting_ops.append(ind._mutate_insert_inner_node)
+            if leaf_config_dict is not None:
+                starting_ops.append(ind._mutate_insert_leaf)
+
+            # how many nodes we adding?
+            ran = np.random.randint(0, max_size+1)
+
+            # add one leaf node if possible
+            if ran > 0:
+                ind._mutate_insert_leaf()
+
+            for _ in range(ran - 1):
+                func = np.random.choice(starting_ops)
+                func()
+
+
+            yield ind
+
 
 class BaggingCompositeGraphSklearn():
     def __init__(self) -> None:
@@ -65,4 +111,3 @@ class BaggingCompositeGraphSklearn():
 class BoostingCompositeGraphSklearn():
     def __init__(self) -> None:
         pass
-
