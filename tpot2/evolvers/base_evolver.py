@@ -22,9 +22,9 @@ from tpot2.utils.utils import get_thresholds, beta_interpolation, remove_items, 
 
 
 class BaseEvolver():
-    def __init__(   self, 
+    def __init__(   self,
                     individual_generator ,
-                    
+
                     objective_functions,
                     objective_function_weights,
                     objective_names = None,
@@ -33,20 +33,20 @@ class BaseEvolver():
 
                     population_size = 50,
                     initial_population_size = None,
-                    population_scaling = .5, 
-                    generations_until_end_population = 1, 
-                    generations = 50, 
+                    population_scaling = .5,
+                    generations_until_end_population = 1,
+                    generations = 50,
                     early_stop = None,
                     early_stop_tol = 0.001,
-                    
 
-                    max_time_seconds=float("inf"), 
+
+                    max_time_seconds=float("inf"),
                     max_eval_time_seconds=60*5,
 
                     n_jobs=1,
                     memory_limit="4GB",
                     client=None,
-                    
+
                     survival_percentage = 1,
                     crossover_probability=.2,
                     mutate_probability=.7,
@@ -56,23 +56,26 @@ class BaseEvolver():
 
                     survival_selector = survival_select_NSGA2,
                     parent_selector = tournament_selection_dominated,
-                    
-                    budget_range = None, 
-                    budget_scaling = .5, 
-                    generations_until_end_budget = 1,                    
+
+                    budget_range = None,
+                    budget_scaling = .5,
+                    generations_until_end_budget = 1,
                     stepwise_steps = 5,
-                    
-                    threshold_evaluation_early_stop = None, 
+
+                    threshold_evaluation_early_stop = None,
                     threshold_evaluation_scaling = .5,
                     min_history_threshold = 20,
                     selection_evaluation_early_stop = None,
                     selection_evaluation_scaling = .5,
-                    evaluation_early_stop_steps = None, 
+                    evaluation_early_stop_steps = None,
                     final_score_strategy = "mean",
 
-                    verbose = 0, 
+                    verbose = 0,
                     periodic_checkpoint_folder = None,
                     callback = None,
+
+                    non_record_objectives_functions = None,
+                    non_record_objective_functions_weights = None
                     ) -> None:
         """
         Uses mutation, crossover, and optimization functions to evolve a population of individuals towards the given objective functions.
@@ -83,7 +86,7 @@ class BaseEvolver():
             Generator that yields new base individuals. Used to generate initial population.
         objective_functions : list of callables
             list of functions that get applied to the individual and return a float or list of floats
-            If an objective function returns multiple values, they are all concatenated in order 
+            If an objective function returns multiple values, they are all concatenated in order
             with respect to objective_function_weights and early_stop_tol.
         objective_function_weights : list of floats
             list of weights for each objective function. Sign flips whether bigger is better or not
@@ -99,8 +102,8 @@ class BaseEvolver():
             Size of the initial population. If None, population_size will be used.
         population_scaling : int, default=0.5
             Scaling factor to use when determining how fast we move the threshold moves from the start to end percentile.
-        generations_until_end_population : int, default=1  
-            Number of generations until the population size reaches population_size            
+        generations_until_end_population : int, default=1
+            Number of generations until the population size reaches population_size
         generations : int, default=50
             Number of generations to run
         early_stop : int, default=None
@@ -109,7 +112,7 @@ class BaseEvolver():
             -list of floats
                 list of tolerances for each objective function. If the difference between the best score and the current score is less than the tolerance, the individual is considered to have converged
                 If an index of the list is None, that item will not be used for early stopping
-            -int 
+            -int
                 If an int is given, it will be used as the tolerance for all objectives
         max_time_seconds : float, default=float("inf")
             Maximum time to run the optimization. If none or inf, will run until the end of the generations.
@@ -120,9 +123,9 @@ class BaseEvolver():
         memory_limit : str, default="4GB"
             Memory limit for each job. See Dask [LocalCluster documentation](https://distributed.dask.org/en/stable/api.html#distributed.Client) for more information.
         client : dask.distributed.Client, default=None
-            A dask client to use for parallelization. If not None, this will override the n_jobs and memory_limit parameters. If None, will create a new client with num_workers=n_jobs and memory_limit=memory_limit. 
+            A dask client to use for parallelization. If not None, this will override the n_jobs and memory_limit parameters. If None, will create a new client with num_workers=n_jobs and memory_limit=memory_limit.
         survival_percentage : float, default=1
-            Percentage of the population size to utilize for mutation and crossover at the beginning of the generation. The rest are discarded. Individuals are selected with the selector passed into survival_selector. The value of this parameter must be between 0 and 1, inclusive. 
+            Percentage of the population size to utilize for mutation and crossover at the beginning of the generation. The rest are discarded. Individuals are selected with the selector passed into survival_selector. The value of this parameter must be between 0 and 1, inclusive.
             For example, if the population size is 100 and the survival percentage is .5, 50 individuals will be selected with NSGA2 from the existing population. These will be used for mutation and crossover to generate the next 100 individuals for the next generation. The remainder are discarded from the live population. In the next generation, there will now be the 50 parents + the 100 individuals for a total of 150. Surivival percentage is based of the population size parameter and not the existing population size (current population size when using successive halving). Therefore, in the next generation we will still select 50 individuals from the currently existing 150.
         crossover_probability : float, default=.2
             Probability of generating a new individual by crossover between two individuals.
@@ -158,12 +161,12 @@ class BaseEvolver():
         selection_evaluation_early_stop : list, default=None
             A lower and upper percent of the population size to select each round of CV.
             Values between 0 and 1.
-        selection_evaluation_scaling : float, default=0.5 
+        selection_evaluation_scaling : float, default=0.5
             A scaling factor to use when determining how fast we move the threshold moves from the start to end percentile.
             Must be greater than zero. Higher numbers will move the threshold to the end faster.
         evaluation_early_stop_steps : int, default=1
             The number of steps that will be taken from the objective function. (e.g., the number of CV folds to evaluate)
-        final_score_strategy : str, default="mean" 
+        final_score_strategy : str, default="mean"
             The strategy to use when determining the final score for an individual.
             "mean": The mean of all objective scores
             "last": The score returned by the last call. Currently each objective is evaluated with a clone of the individual.
@@ -187,9 +190,9 @@ class BaseEvolver():
             if evaluation_early_stop_steps is None:
                 raise ValueError("evaluation_early_stop_steps must be set when using threshold_evaluation_early_stop or selection_evaluation_early_stop")
 
-        self.individual_generator = individual_generator 
-        self.population_size = population_size 
-        self.objective_functions = objective_functions 
+        self.individual_generator = individual_generator
+        self.population_size = population_size
+        self.objective_functions = objective_functions
         self.objective_function_weights = np.array(objective_function_weights)
         self.bigger_is_better = bigger_is_better
         if not bigger_is_better:
@@ -208,32 +211,32 @@ class BaseEvolver():
 
 
         self.periodic_checkpoint_folder = periodic_checkpoint_folder
-        self.verbose  = verbose  
-        self.callback = callback 
-        self.generations = generations 
+        self.verbose  = verbose
+        self.callback = callback
+        self.generations = generations
         self.n_jobs = n_jobs
 
 
-        
+
         if max_time_seconds is None:
             self.max_time_seconds = float("inf")
         else:
-            self.max_time_seconds = max_time_seconds  
-        
+            self.max_time_seconds = max_time_seconds
+
         #functools requires none for infinite time, doesn't support inf
         if max_eval_time_seconds is not None and math.isinf(max_eval_time_seconds ):
             self.max_eval_time_seconds = None
         else:
             self.max_eval_time_seconds = max_eval_time_seconds
 
-        
 
-        
+
+
         self.generation = 0
 
 
         self.threshold_evaluation_early_stop =threshold_evaluation_early_stop
-        self.threshold_evaluation_scaling =  max(0.00001,threshold_evaluation_scaling ) 
+        self.threshold_evaluation_scaling =  max(0.00001,threshold_evaluation_scaling )
         self.min_history_threshold = min_history_threshold
 
         self.selection_evaluation_early_stop = selection_evaluation_early_stop
@@ -254,7 +257,7 @@ class BaseEvolver():
         self.survival_selector=survival_selector
         self.parent_selector=parent_selector
         self.survival_percentage = survival_percentage
-        
+
         total_var_p = crossover_probability + mutate_probability + mutate_then_crossover_probability + crossover_then_mutate_probability
         self.crossover_probability = crossover_probability / total_var_p
         self.mutate_probability = mutate_probability  / total_var_p
@@ -298,7 +301,7 @@ class BaseEvolver():
                 self.budget = self.budget_list[self.generation]
         else:
             self.budget = None
-        
+
 
         self.early_stop_tol = early_stop_tol
         self.early_stop = early_stop
@@ -317,7 +320,7 @@ class BaseEvolver():
             if os.path.exists(self.population_file):
                 self.population = pickle.load(open(self.population_file, "rb"))
 
-                if len(self.population.evaluated_individuals)>0 and "Generation" in self.population.evaluated_individuals.columns:      
+                if len(self.population.evaluated_individuals)>0 and "Generation" in self.population.evaluated_individuals.columns:
                     self.generation = self.population.evaluated_individuals['Generation'].max() + 1 #TODO check if this is empty?
 
         init_names = self.objective_names
@@ -329,6 +332,11 @@ class BaseEvolver():
             self.population.add_to_population(initial_population)
             self.population.update_column(self.population.population, column_names="Generation", data=self.generation)
 
+        if non_record_objectives_functions is not None:
+            self.non_record_objectives_functions = non_record_objectives_functions
+
+        if non_record_objective_functions_weights is not None:
+            self.non_record_objective_functions_weights = non_record_objective_functions_weights
 
     def optimize(self, generations=None):
 
@@ -348,14 +356,14 @@ class BaseEvolver():
                     processes=True,
                     memory_limit=self.memory_limit)
             self._client = Client(self._cluster)
-        
+
 
 
         if generations is None:
             generations = self.generations
 
-        start_time = time.time() 
-        
+        start_time = time.time()
+
         generations_without_improvement = np.array([0 for _ in range(len(self.objective_function_weights))])
         best_scores = [-np.inf for _ in range(len(self.objective_function_weights))]
 
@@ -363,7 +371,7 @@ class BaseEvolver():
         self.scheduled_timeout_time = time.time() + self.max_time_seconds
 
 
-        try: 
+        try:
             #for gen in tnrange(generations,desc="Generation", disable=self.verbose<1):
             done = False
             gen = 0
@@ -381,7 +389,7 @@ class BaseEvolver():
                     self.evaluate_population()
                     if self.population_file is not None:
                         pickle.dump(self.population, open(self.population_file, "wb"))
-                    
+
                     attempts = 2
                     while len(self.population.population) == 0 and attempts > 0:
                         new_initial_population = [next(self.individual_generator) for _ in range(self.cur_population_size)]
@@ -398,8 +406,8 @@ class BaseEvolver():
                     if time.time() - start_time > self.max_time_seconds:
                         break
                     self.step()
-                    
-                if self.verbose >= 3:  
+
+                if self.verbose >= 3:
                     sign = np.sign(self.objective_function_weights)
                     valid_df = self.population.evaluated_individuals[~self.population.evaluated_individuals[self.objective_names].isin(["TIMEOUT","INVALID"]).any(axis=1)][self.objective_names]*sign
                     cur_best_scores = valid_df.max(axis=0)*sign
@@ -418,7 +426,7 @@ class BaseEvolver():
                         cur_best_scores = valid_df.max(axis=0)
                         cur_best_scores = cur_best_scores.to_numpy()
                         #cur_best_scores =  self.population.get_column(self.population.population, column_names=self.objective_names).max(axis=0)*sign #TODO this assumes the current population is the best
-                        
+
                         improved = ( np.array(cur_best_scores) - np.array(best_scores) >= np.array(self.early_stop_tol) )
                         not_improved = np.logical_not(improved)
                         generations_without_improvement = generations_without_improvement * not_improved + not_improved #set to zero if not improved, else increment
@@ -445,12 +453,12 @@ class BaseEvolver():
         except KeyboardInterrupt:
             if self.verbose >= 3:
                 print("KeyboardInterrupt")
-            
+
             self.population.remove_invalid_from_population(column_names=self.objective_names, invalid_value="INVALID")
             self.population.remove_invalid_from_population(column_names=self.objective_names, invalid_value="TIMEOUT")
 
 
-        
+
 
         if self.population_file is not None:
             pickle.dump(self.population, open(self.population_file, "wb"))
@@ -468,7 +476,7 @@ class BaseEvolver():
             else:
                 self.cur_population_size = self.population_size
 
-                
+
         if self.budget_list is not None:
             if len(self.budget_list) <= self.generation:
                 self.budget = self.budget_range[-1]
@@ -481,11 +489,11 @@ class BaseEvolver():
 
         self.one_generation_step()
         self.generation += 1
-        
 
-    
+
+
     def one_generation_step(self, ): #your EA Algorithm goes here
-        
+
         if self.survival_selector is not None:
             n_survivors = max(1,int(self.cur_population_size*self.survival_percentage)) #always keep at least one individual
             #Get survivors from current population
@@ -493,7 +501,9 @@ class BaseEvolver():
             new_population_index = np.ravel(self.survival_selector(weighted_scores, k=n_survivors)) #TODO make it clear that we are concatenating scores...
             self.population.set_population(np.array(self.population.population)[new_population_index])
         weighted_scores = self.population.get_column(self.population.population, column_names=self.objective_names) * self.objective_function_weights
-        
+
+        select_scores = np.array(self.get_non_recorded_scores()) * self.objective_function_weights
+
         #number of crossover pairs and mutation only parent to generate
         n_crossover = int(self.cur_population_size*self.crossover_probability)
         n_crossover_then_mutate = int(self.cur_population_size*self.crossover_then_mutate_probability)
@@ -501,9 +511,9 @@ class BaseEvolver():
         n_total_crossover_pairs = n_crossover + n_crossover_then_mutate + n_mutate_then_crossover
         n_mutate_parents = self.cur_population_size - n_total_crossover_pairs
 
-        #get crossover pairs
+        #get crossover pairs #TODO make this random, not in the specified order
         if n_total_crossover_pairs > 0:
-            cx_parents_index = self.parent_selector(weighted_scores, k=n_total_crossover_pairs, n_parents=self.n_parents,   ) #TODO make it clear that we are concatenating scores...
+            cx_parents_index = self.parent_selector(select_scores, k=n_total_crossover_pairs, n_parents=self.n_parents,   ) #TODO make it clear that we are concatenating scores...
             cx_var_ops = np.concatenate([ np.repeat("crossover",n_crossover),
                                         np.repeat("mutate_then_crossover",n_mutate_then_crossover),
                                         np.repeat("crossover_then_mutate",n_crossover_then_mutate),
@@ -511,10 +521,10 @@ class BaseEvolver():
         else:
             cx_parents_index = []
             cx_var_ops = []
-        
+
         #get mutation only parents
         if n_mutate_parents > 0:
-            m_parents_index = self.parent_selector(weighted_scores, k=n_mutate_parents, n_parents=1,  ) #TODO make it clear that we are concatenating scores...
+            m_parents_index = self.parent_selector(select_scores, k=n_mutate_parents, n_parents=1,  ) #TODO make it clear that we are concatenating scores...
             m_var_ops = np.repeat("mutate",len(m_parents_index))
         else:
             m_parents_index = []
@@ -525,7 +535,7 @@ class BaseEvolver():
         parents = list(cx_parents) + list(m_parents)
 
         var_ops = np.concatenate([cx_var_ops, m_var_ops])
-        offspring = self.population.create_offspring(parents, var_ops, n_jobs=1) 
+        offspring = self.population.create_offspring(parents, var_ops, n_jobs=1)
         self.population.update_column(offspring, column_names="Generation", data=self.generation, )
         #print("done making offspring")
 
@@ -534,14 +544,14 @@ class BaseEvolver():
         #print("done evaluating")
 
 
-    
+
 
 
     # Gets a list of unevaluated individuals in the livepopulation, evaluates them, and removes failed attempts
     # TODO This could probably be an independent function?
     def evaluate_population(self,):
-        
-        #Update the sliding scales and thresholds 
+
+        #Update the sliding scales and thresholds
         # Save population, TODO remove some of these
         if self.population_file is not None: # and time.time() - last_save_time > 60*10:
             pickle.dump(self.population, open(self.population_file, "wb"))
@@ -555,8 +565,8 @@ class BaseEvolver():
             old_data = old_data[old_data[self.objective_names].notnull().all(axis=1)]
             if len(old_data) >= self.min_history_threshold:
                 self.thresholds = np.array([get_thresholds(old_data[obj_name],
-                                                            start=self.threshold_evaluation_early_stop[0], 
-                                                            end=self.threshold_evaluation_early_stop[1], 
+                                                            start=self.threshold_evaluation_early_stop[0],
+                                                            end=self.threshold_evaluation_early_stop[1],
                                                             scale=self.threshold_evaluation_scaling,
                                                             n=self.evaluation_early_stop_steps)
                                         for obj_name in self.objective_names]).T
@@ -566,7 +576,7 @@ class BaseEvolver():
             lower = self.cur_population_size*self.selection_evaluation_early_stop[0]
             upper = self.cur_population_size*self.selection_evaluation_early_stop[1]
             #survival_counts = self.cur_population_size*(scipy.special.betainc(1,self.selection_evaluation_scaling,np.linspace(0,1,self.evaluation_early_stop_steps))*(upper-lower)+lower)
-            
+
             survival_counts = np.array(beta_interpolation(start=lower, end=upper, scale=self.selection_evaluation_scaling, n=self.evaluation_early_stop_steps, n_steps=self.evaluation_early_stop_steps))
             self.survival_counts = survival_counts.astype(int)
         else:
@@ -592,7 +602,7 @@ class BaseEvolver():
 
     def evaluate_population_full(self, budget=None):
         individuals_to_evaluate = self.get_unevaluated_individuals(self.objective_names, budget=budget,)
-        
+
         #print("evaluating this many individuals: ", len(individuals_to_evaluate))
 
         if len(individuals_to_evaluate) == 0:
@@ -620,6 +630,22 @@ class BaseEvolver():
         self.population.remove_invalid_from_population(column_names=self.objective_names)
         self.population.remove_invalid_from_population(column_names=self.objective_names, invalid_value="TIMEOUT")
 
+    def get_non_recorded_scores(self, budget=None):
+        cur_pop = np.array(self.population.population)
+
+        if self.max_eval_time_seconds is not None:
+            theoretical_timeout = self.max_eval_time_seconds * math.ceil(len(cur_pop) / self.n_jobs)
+            theoretical_timeout = theoretical_timeout*2
+        else:
+            theoretical_timeout = np.inf
+        scheduled_timeout_time_left = self.scheduled_timeout_time - time.time()
+        parallel_timeout = min(theoretical_timeout, scheduled_timeout_time_left)
+        if parallel_timeout < 0:
+            parallel_timeout = 10
+        scores = tpot2.utils.eval_utils.parallel_eval_objective_list(cur_pop, self.non_record_objectives_functions, self.n_jobs, verbose=self.verbose, timeout=self.max_eval_time_seconds, budget=budget, n_expected_columns=len(self.objective_names), client=self._client, parallel_timeout=parallel_timeout, **self.objective_kwargs)
+
+        return scores
+
     def get_unevaluated_individuals(self, column_names, budget=None, individual_list=None):
         if individual_list is not None:
             cur_pop = np.array(individual_list)
@@ -636,7 +662,7 @@ class BaseEvolver():
                 unevaluated_filter = lambda i: any(offspring_scores.loc[offspring_scores.index[i]][column_names].isna())
             unevaluated_individuals_this_step = [i for i in range(len(cur_pop)) if unevaluated_filter(i)]
             return cur_pop[unevaluated_individuals_this_step]
-        
+
         else: #if column names are not in the evaluated_individuals, then we have not evaluated any individuals yet
             for name_step in column_names:
                 self.population.evaluated_individuals[name_step] = np.nan
@@ -653,23 +679,23 @@ class BaseEvolver():
 
 
         cur_individuals = self.population.population.copy()
-        
+
         all_step_names = []
         for step in range(self.evaluation_early_stop_steps):
             if budget is None:
                 this_step_names = [f"{n}_step_{step}" for n in self.objective_names]
             else:
                 this_step_names = [f"{n}_budget_{budget}_step_{step}" for n in self.objective_names]
-            
+
             all_step_names.append(this_step_names)
-            
+
             unevaluated_individuals_this_step = self.get_unevaluated_individuals(this_step_names, budget=None, individual_list=cur_individuals)
 
             if len(unevaluated_individuals_this_step) == 0:
                 if self.verbose > 3:
                     print("No new individuals to evaluate")
                 continue
-            
+
             if self.max_eval_time_seconds is not None:
                 theoretical_timeout = self.max_eval_time_seconds * math.ceil(len(unevaluated_individuals_this_step) / self.n_jobs)
                 theoretical_timeout = theoretical_timeout*2
@@ -750,9 +776,9 @@ class BaseEvolver():
                             invalids.append(i)
 
                     if len(invalids) > 0:
-                        
+
                         max_to_remove = min(len(cur_individuals) - self.n_jobs, len(invalids))
-                        
+
                         if max_to_remove < len(invalids):
                             invalids = np.random.choice(invalids, max_to_remove, replace=False)
 
