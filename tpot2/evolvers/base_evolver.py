@@ -89,6 +89,10 @@ class BaseEvolver():
                     callback = None,
                     rng_=None,
 
+                    # objectives we need to calculate but don't record
+                    selection_objectives_functions = None,
+                    selection_objective_functions_weights = None,
+
                     ) -> None:
         """
         Uses mutation, crossover, and optimization functions to evolve a population of individuals towards the given objective functions.
@@ -367,6 +371,11 @@ class BaseEvolver():
             self.population.add_to_population(initial_population, self.rng)
             self.population.update_column(self.population.population, column_names="Generation", data=self.generation)
 
+        if selection_objectives_functions is not None:
+            self.selection_objectives_functions = selection_objectives_functions
+        if selection_objective_functions_weights is not None:
+            self.selection_objective_functions_weights = np.array(selection_objective_functions_weights)
+
 
     def optimize(self, generations=None):
 
@@ -529,7 +538,23 @@ class BaseEvolver():
         self.generation += 1
 
     def generate_offspring(self, ): #your EA Algorithm goes here
-        parents = self.population.parent_select(selector=self.parent_selector, weights=self.objective_function_weights, columns_names=self.objective_names, k=self.cur_population_size, n_parents=2, rng_=self.rng)
+
+        selection_scores = np.array(self.get_selection_scores())
+
+        # parents = self.population.parent_select(selector=self.parent_selector, weights=self.objective_function_weights, columns_names=self.objective_names, k=self.cur_population_size, n_parents=2, rng_=self.rng)
+
+        weighted_scores = selection_scores * self.selection_objective_functions_weights
+
+
+        parents_index = self.parent_selector(weighted_scores, k=self.cur_population_size, n_parents=1, rng_=self.rng)
+        print('parents_index:',parents_index)
+        print(np.array(self.population))
+        print()
+
+
+        parents = np.array(self.population)[parents_index]
+
+
         p = np.array([self.crossover_probability, self.mutate_then_crossover_probability, self.crossover_then_mutate_probability, self.mutate_probability])
         p = p / p.sum()
         var_op_list = self.rng.choice(["crossover", "mutate_then_crossover", "crossover_then_mutate", "mutate"], size=self.cur_population_size, p=p)
@@ -543,8 +568,12 @@ class BaseEvolver():
         self.population.update_column(offspring, column_names="Generation", data=self.generation, )
 
 
+    def get_selection_scores(self, budget=None):
+        cur_pop = np.array(self.population.population)
 
+        scores, start_times, end_times = tpot2.utils.eval_utils.parallel_eval_objective_list2(cur_pop, self.selection_objectives_functions, verbose=self.verbose, max_eval_time_seconds=self.max_eval_time_seconds, budget=budget, n_expected_columns=len(self.objective_names), client=self._client, **self.objective_kwargs)
 
+        return scores
 
 
 

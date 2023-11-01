@@ -111,6 +111,9 @@ class TPOTEstimator(BaseEstimator):
                          # random seed for random number generator (rng)
                         random_state = None,
 
+                        # objectives we need to calculate but don't record
+                        selection_objectives_functions = None,
+                        selection_objective_functions_weights = None,
                         ):
 
         '''
@@ -557,6 +560,12 @@ class TPOTEstimator(BaseEstimator):
 
         self.label_encoder_ = None
 
+        if selection_objectives_functions is not None:
+            self.selection_objectives_functions = selection_objectives_functions
+
+        if selection_objective_functions_weights is not None:
+            self.selection_objective_functions_weights = selection_objective_functions_weights
+
 
         set_dask_settings()
 
@@ -701,6 +710,31 @@ class TPOTEstimator(BaseEstimator):
                 **kwargs,
             )
 
+        def sel_objective_function(pipeline_individual,
+                                            X,
+                                            y,
+                                            is_classification=self.classification,
+                                            scorers= [],
+                                            cv=self.cv_gen,
+                                            other_objective_functions=self.selection_objectives_functions,
+                                            memory=self.memory,
+                                            cross_val_predict_cv=self.cross_val_predict_cv,
+                                            subset_column=self.subset_column,
+                                            **kwargs):
+            return objective_function_generator( # just use the objective_function_generator() and pass non_recorded_objectives_functions
+                pipeline_individual,
+                X,
+                y,
+                is_classification=is_classification,
+                scorers= scorers,
+                cv=cv,
+                other_objective_functions=other_objective_functions,
+                memory=memory,
+                cross_val_predict_cv=cross_val_predict_cv,
+                subset_column=subset_column,
+                **kwargs,
+            )
+
         self.individual_generator_instance = tpot2.individual_representations.graph_pipeline_individual.estimator_graph_individual_generator(
                                                             inner_config_dict=inner_config_dict,
                                                             root_config_dict=root_config_dict,
@@ -770,6 +804,10 @@ class TPOTEstimator(BaseEstimator):
                                             crossover_then_mutate_probability= self.crossover_then_mutate_probability,
 
                                             rng_=self.rng,
+
+                                            # objectives we need to calculate but don't record
+                                            selection_objectives_functions = [sel_objective_function],
+                                            selection_objective_functions_weights = self.selection_objective_functions_weights,
                                             )
 
 
