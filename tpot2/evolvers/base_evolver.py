@@ -540,7 +540,7 @@ class BaseEvolver():
     def generate_offspring(self, ): #your EA Algorithm goes here
 
         selection_scores = self.get_selection_scores()
-        print('pop_size:',len(selection_scores))
+        # print('pop_size:',len(selection_scores))
         parents = self.population.parent_select_j(selector=self.parent_selector, scores=selection_scores, weights=self.objective_function_weights, k=self.cur_population_size, n_parents=1, rng_=self.rng)
 
         p = np.array([self.crossover_probability, self.mutate_then_crossover_probability, self.crossover_then_mutate_probability, self.mutate_probability])
@@ -551,13 +551,14 @@ class BaseEvolver():
             if op == "mutate":
                 parents[i] = parents[i][0] #mutations take a single individual
 
-        offspring = self.population.create_offspring2(parents, var_op_list, self.mutation_functions, self.mutation_function_weights, self.crossover_functions, self.crossover_function_weights, add_to_population=True, keep_repeats=False, mutate_until_unique=True, rng_=self.rng)
-
+        offspring = self.population.create_offspring2(parents, var_op_list, self.mutation_functions, self.mutation_function_weights, self.crossover_functions, self.crossover_function_weights, add_to_population=False, keep_repeats=False, mutate_until_unique=True, rng_=self.rng)
+        self.population.set_population(offspring)
         self.population.update_column(offspring, column_names="Generation", data=self.generation, )
 
 
     def get_selection_scores(self, budget=None):
         cur_pop = np.array(self.population.population)
+        print(self.population.population)
 
         scores, start_times, end_times = tpot2.utils.eval_utils.parallel_eval_objective_list2(cur_pop, self.selection_objectives_functions, verbose=self.verbose, max_eval_time_seconds=self.max_eval_time_seconds, budget=budget, n_expected_columns=len(self.objective_names), client=self._client, **self.objective_kwargs)
 
