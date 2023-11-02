@@ -106,6 +106,13 @@ class Population():
         parents = np.array(self.population)[parents_index]
         return parents
 
+    def parent_select_j(self, selector, scores, weights, columns_names, k, n_parents, rng_=None):
+        rng = np.random.default_rng(rng_)
+        weighted_scores = scores * weights
+        parents_index = selector(weighted_scores, k=k, n_parents=n_parents, rng_=rng)
+        parents = np.array(self.population)[parents_index]
+        return parents
+
 
     #remove individuals that either do not have a column_name value or a nan in that value
     #TODO take into account when the value is not a list/tuple?
@@ -330,9 +337,12 @@ class Population():
 
         for parents, var_op in zip(parents_list,var_op_list):
             #TODO put this loop in population class
-            if var_op == "mutation":
+            if var_op == "mutate":
+                # print('In mutation')
                 mutation_op = rng.choice(mutation_functions, p=mutation_function_weights)
-                all_offspring.append(copy_and_mutate(parents, mutation_op, rng_=rng))
+                # print('mutation_op:',mutation_op)
+                # print('parents:',type(parents[0]))
+                all_offspring.append(copy_and_mutate(parents[0], mutation_op, rng_=rng))
                 chosen_ops.append(mutation_op.__name__)
 
 
@@ -358,6 +368,7 @@ class Population():
                 all_offspring.append(child)
                 chosen_ops.append(f"{crossover_op.__name__} , {mutation_op.__name__}")
 
+        # print('all_offspring:',all_offspring)
 
         for parents, offspring, var_op in zip(parents_list, all_offspring, chosen_ops):
 
