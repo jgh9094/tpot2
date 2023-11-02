@@ -540,17 +540,12 @@ class BaseEvolver():
     def generate_offspring(self, ): #your EA Algorithm goes here
 
         selection_scores = self.get_selection_scores()
-        parents = self.population.parent_select_j(selector=self.parent_selector, scores=selection_scores, weights=self.objective_function_weights, columns_names=self.objective_names, k=self.cur_population_size, n_parents=1, rng_=self.rng)
-
-        # print('parents:')
-        # for p in parents:
-        #     print(p.__str__())
+        print('pop_size:',len(selection_scores))
+        parents = self.population.parent_select_j(selector=self.parent_selector, scores=selection_scores, weights=self.objective_function_weights, k=self.cur_population_size, n_parents=1, rng_=self.rng)
 
         p = np.array([self.crossover_probability, self.mutate_then_crossover_probability, self.crossover_then_mutate_probability, self.mutate_probability])
         p = p / p.sum()
         var_op_list = self.rng.choice(["crossover", "mutate_then_crossover", "crossover_then_mutate", "mutate"], size=self.cur_population_size, p=p)
-
-        print('var_op_list', var_op_list)
 
         for i, op in enumerate(var_op_list):
             if op == "mutate":
