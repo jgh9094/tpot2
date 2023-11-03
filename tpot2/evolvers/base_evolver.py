@@ -19,6 +19,7 @@ from dask.distributed import LocalCluster
 from tpot2.selectors import survival_select_NSGA2, tournament_selection_dominated
 import math
 from tpot2.utils.utils import get_thresholds, beta_interpolation, remove_items, equalize_list
+import pandas as pd
 
 def ind_mutate(ind, rng_):
     rng = np.random.default_rng(rng_)
@@ -540,7 +541,13 @@ class BaseEvolver():
     def generate_offspring(self, ): #your EA Algorithm goes here
 
         selection_scores = self.get_selection_scores()
-        # print('pop_size:',len(selection_scores))
+        stats = [sum(x)/len(x) for x in selection_scores]
+
+        print('mini:', min(stats))
+        print('medi:', np.median(stats))
+        print('mean:', np.mean(stats))
+        print('maxi:', max(stats))
+
         parents = self.population.parent_select_j(selector=self.parent_selector, scores=selection_scores, weights=self.objective_function_weights, k=self.cur_population_size, n_parents=1, rng_=self.rng)
 
         p = np.array([self.crossover_probability, self.mutate_then_crossover_probability, self.crossover_then_mutate_probability, self.mutate_probability])
@@ -558,7 +565,6 @@ class BaseEvolver():
 
     def get_selection_scores(self, budget=None):
         cur_pop = np.array(self.population.population)
-        print(self.population.population)
 
         scores, start_times, end_times = tpot2.utils.eval_utils.parallel_eval_objective_list2(cur_pop, self.selection_objectives_functions, verbose=self.verbose, max_eval_time_seconds=self.max_eval_time_seconds, budget=budget, n_expected_columns=len(self.objective_names), client=self._client, **self.objective_kwargs)
 
