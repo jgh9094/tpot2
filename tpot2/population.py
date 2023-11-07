@@ -106,10 +106,9 @@ class Population():
         parents = np.array(self.population)[parents_index]
         return parents
 
-    def parent_select_j(self, selector, scores, weights, k, n_parents, rng_=None):
+    def parent_select_j(self, selector, scores, k, n_parents, rng_=None):
         rng = np.random.default_rng(rng_)
-        weighted_scores = scores * weights
-        parents_index = selector(weighted_scores, k=k, n_parents=n_parents, rng_=rng)
+        parents_index = selector(np.array(scores), k=k, n_parents=n_parents, rng_=rng)
         parents = np.array(self.population)[parents_index]
         return parents
 

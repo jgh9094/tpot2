@@ -548,7 +548,7 @@ class BaseEvolver():
         print('mean:', np.mean(stats))
         print('maxi:', max(stats))
 
-        parents = self.population.parent_select_j(selector=self.parent_selector, scores=selection_scores, weights=self.objective_function_weights, k=self.cur_population_size, n_parents=1, rng_=self.rng)
+        parents = self.population.parent_select_j(selector=self.parent_selector, scores=selection_scores, k=self.cur_population_size, n_parents=1, rng_=self.rng)
 
         p = np.array([self.crossover_probability, self.mutate_then_crossover_probability, self.crossover_then_mutate_probability, self.mutate_probability])
         p = p / p.sum()
