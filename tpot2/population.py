@@ -376,25 +376,47 @@ class Population():
             # if isinstance(offspring, collections.abc.Iterable):
             #     offspring = offspring[0]
 
-            if add_to_population:
-                added = self.add_to_population(offspring, rng_=rng, keep_repeats=keep_repeats, mutate_until_unique=mutate_until_unique)
-                if len(added) > 0:
-                    for new_child in added:
-                        parent_keys = [parent.unique_id() for parent in parents]
-                        if not pd.api.types.is_object_dtype(self.evaluated_individuals["Parents"]): #TODO Is there a cleaner way of doing this? Not required for some python environments?
-                            self.evaluated_individuals["Parents"] = self.evaluated_individuals["Parents"].astype('object')
-                        self.evaluated_individuals.at[new_child.unique_id(),"Parents"] = tuple(parent_keys)
+            # if add_to_population:
+            # added = self.add_to_population(offspring, rng_=rng, keep_repeats=keep_repeats, mutate_until_unique=mutate_until_unique)
+            self.add_to_population_j(offspring)
+                # if len(added) > 0:
+                    # for new_child in added:
+            parent_keys = [parent.unique_id() for parent in parents]
+            if not pd.api.types.is_object_dtype(self.evaluated_individuals["Parents"]): #TODO Is there a cleaner way of doing this? Not required for some python environments?
+                self.evaluated_individuals["Parents"] = self.evaluated_individuals["Parents"].astype('object')
+            self.evaluated_individuals.at[offspring.unique_id(),"Parents"] = tuple(parent_keys)
 
-                        self.evaluated_individuals.at[new_child.unique_id(),"Variation_Function"] = var_op
+            self.evaluated_individuals.at[offspring.unique_id(),"Variation_Function"] = var_op
 
 
-                        new_offspring.append(new_child)
+            new_offspring.append(offspring)
 
-            else:
-                new_offspring.append(offspring)
+            # else:
+                # new_offspring.append(offspring)
 
 
         return new_offspring
+
+    # takes the list of individuals and adds it to the live population list.
+    # if keep_repeats is False, repeated individuals are not added to the population
+    # returns a list of individuals added to the live population
+    #TODO make keep repeats allow for previously evaluated individuals,
+    #but make sure that the live population only includes one of each, no repeats
+    def add_to_population_j(self, individuals: typing.List[BaseIndividual]):
+        # print('add_to_population_j')
+
+        if not isinstance(individuals, collections.abc.Iterable):
+            individuals = [individuals]
+
+        #TODO check for proper inputs
+        for individual in individuals:
+            # print('ind:', individual)
+            key = individual.unique_id()
+
+            if key not in self.evaluated_individuals.index: #If its new, we always add it
+                # print('key no in')
+                self.evaluated_individuals.loc[key] = np.nan
+                self.evaluated_individuals.loc[key,"Individual"] = copy.deepcopy(individual)
 
 
 
