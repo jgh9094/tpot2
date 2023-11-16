@@ -1164,6 +1164,18 @@ class GraphIndividual(BaseIndividual):
                 node_list.extend(node.graph.nodes)
         return node_list
 
+    # return a dictionary with unique node types
+    def node_type_dict(self, types):
+        for node in self.graph:
+            if len(list(self.graph.predecessors(node))) == 0: #root
+                types['root'].add(node.method_class.__name__)
+            elif self.leaf_config_dict is not None and len(list(self.graph.successors(node))) == 0: #leaf
+                types['leaf'].add(node.method_class.__name__)
+            else: #inner
+                types['inner'].add(node.method_class.__name__)
+                
+        return types
+
 
 
 
