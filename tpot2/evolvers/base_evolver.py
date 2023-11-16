@@ -377,6 +377,13 @@ class BaseEvolver():
         if selection_objective_functions_weights is not None:
             self.selection_objective_functions_weights = np.array(selection_objective_functions_weights)
 
+        self.data_df = None
+        self.data_recorder = {'gen':[],'uni_root_nodes':[],'uni_inner_nodes':[],'uni_leaf_nodes':[],'uni_sel_obj':[],
+                            'max_sel_obj':[]}
+
+        for obj in self.objective_names:
+            self.data_recorder.update({obj:[]})
+
 
     def optimize(self, generations=None):
 
@@ -488,6 +495,9 @@ class BaseEvolver():
                     pbar.update(1)
 
                 if generations is not None and gen >= generations:
+                    # get selection scores here one more time to get the final pop
+                    selection_scores = self.get_selection_scores()
+                    self.collect_data(sel_scores=selection_scores)
                     done = True
 
         except KeyboardInterrupt:
@@ -508,6 +518,8 @@ class BaseEvolver():
             self._cluster.close()
 
         tpot2.utils.get_pareto_frontier(self.population.evaluated_individuals, column_names=self.objective_names, weights=self.objective_function_weights, invalid_values=["TIMEOUT","INVALID"])
+
+        self.data_df = pd.DataFrame.from_dict(self.data_recorder,orient='index').transpose()
 
     def step(self,):
         if self.population_size_list is not None:
@@ -530,8 +542,7 @@ class BaseEvolver():
                                                 weights=self.objective_function_weights,
                                                 columns_names=self.objective_names,
                                                 n_survivors=n_survivors,
-                                                inplace=True,
-                                                rng_=self.rng,)
+                                                inplace=True)
 
         self.generate_offspring()
         self.evaluate_population()
@@ -541,12 +552,7 @@ class BaseEvolver():
     def generate_offspring(self, ): #your EA Algorithm goes here
 
         selection_scores = self.get_selection_scores()
-        stats = [sum(x)/len(x) for x in selection_scores]
-
-        print('mini:', min(stats))
-        print('medi:', np.median(stats))
-        print('mean:', np.mean(stats))
-        print('maxi:', max(stats))
+        self.collect_data(sel_scores=selection_scores)
 
         parents = self.population.parent_select_j(selector=self.parent_selector, scores=selection_scores, k=self.cur_population_size, n_parents=1, rng_=self.rng)
 
@@ -559,6 +565,7 @@ class BaseEvolver():
                 parents[i] = parents[i][0] #mutations take a single individual
 
         offspring = self.population.create_offspring2(parents, var_op_list, self.mutation_functions, self.mutation_function_weights, self.crossover_functions, self.crossover_function_weights, add_to_population=False, keep_repeats=False, mutate_until_unique=True, rng_=self.rng)
+        # self.population.add_to_population_j(offspring)
         self.population.set_population(offspring)
         self.population.update_column(offspring, column_names="Generation", data=self.generation, )
 
@@ -808,3 +815,43 @@ class BaseEvolver():
 
                             new_population_index = survival_selector(weighted_scores, k=k)
                             cur_individuals = np.array(cur_individuals)[new_population_index]
+
+    def collect_data(self, sel_scores):
+        root,inner,leaf = self.unique_node_types()
+
+        self.data_recorder['gen'].append(self.generation)
+        self.data_recorder['uni_root_nodes'].append(root)
+        self.data_recorder['uni_inner_nodes'].append(inner)
+        self.data_recorder['uni_leaf_nodes'].append(leaf)
+        self.data_recorder['uni_sel_obj'].append(self.unique_objectives(sel_scores=sel_scores))
+        self.data_recorder['max_sel_obj'].append(max([sum(x)/len(x) for x in sel_scores]))
+
+        for indx,obj in enumerate(self.objective_names):
+            data = []
+            for pipe_line in self.population.population:
+                data.append(self.population.get_column(pipe_line,obj,to_numpy=False) * self.objective_function_weights[indx])
+
+            self.data_recorder[obj].append(max(data)* self.objective_function_weights[indx])
+
+    def unique_objectives(self, sel_scores):
+        final = 0
+        for obj in range(len(sel_scores[0])):
+            cnt = 0
+            for pipe in range(len(self.population.population)):
+                if sel_scores[pipe][obj] == 1:
+                    cnt += 1
+                if 1 < cnt:
+                    break
+            if cnt == 1:
+                final += 1
+
+        return final / len(sel_scores[0])
+
+    def unique_node_types(self):
+        types = {'root': set(), 'inner': set(), 'leaf':set()}
+
+        # go through each solution and get the type it is
+        for sol in self.population.population:
+            types = sol.node_type_dict(types=types)
+
+        return len(types['root']), len(types['inner']), len(types['leaf'])
