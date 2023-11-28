@@ -835,6 +835,8 @@ class BaseEvolver():
 
     def unique_objectives(self, sel_scores):
         final = 0
+        print('len(sel_scores[0]):',len(sel_scores[0]))
+        print('len(self.population.population):',len(self.population.population))
         for obj in range(len(sel_scores[0])):
             cnt = 0
             for pipe in range(len(self.population.population)):
