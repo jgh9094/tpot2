@@ -559,9 +559,8 @@ class BaseEvolver():
             print(ind)
 
             # look at individual node hyper_parameters
-            for n1 in ind.graph.nodes:
-                hyperparams = ind.graph.nodes[n1]['instance'].__str__().strip()
-                print(hyperparams)
+            for node in ind.graph.nodes:
+                print(node.hyperparameters)
 
         print('-'*100)
 
