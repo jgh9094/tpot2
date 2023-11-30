@@ -63,6 +63,8 @@ def estimator_graph_individual_generator(
                     func = rng.choice(starting_ops)
                     func(rng_=rng)
 
+            print(ind)
+
             yield ind
 
 
