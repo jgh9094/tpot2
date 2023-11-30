@@ -850,6 +850,8 @@ class BaseEvolver():
             print('len(sel_scores),',len(sel_scores))
             exit(0)
 
+        print('sel_scores:',sel_scores)
+
         for obj in range(len(sel_scores[0])):
             cnt = 0
             for pipe in range(len(self.population.population)):
