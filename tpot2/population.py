@@ -207,6 +207,11 @@ class Population():
             else:
                 key = individual
 
+        print('update_column')
+        print(column_names)
+        print(data)
+
+
         self.evaluated_individuals.loc[key,column_names] = data
 
 
