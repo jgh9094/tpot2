@@ -557,6 +557,12 @@ class BaseEvolver():
         print('CURRENT POPULATION')
         for ind in self.population.population:
             print(ind)
+
+            # look at individual node hyper_parameters
+            for n1,n2 in ind.graph.nodes:
+                hyperparams = ind.graph.nodes[n1]['instance'].__str__().strip()
+                print(hyperparams)
+
         print('-'*100)
 
         selection_scores = self.get_selection_scores()
