@@ -856,7 +856,9 @@ class BaseEvolver():
             print('len(sel_scores),',len(sel_scores))
             exit(0)
 
-        print('sel_scores:',sel_scores)
+        print('sel_scores:')
+        for score in sel_scores:
+            print(score)
 
         for obj in range(len(sel_scores[0])):
             cnt = 0
