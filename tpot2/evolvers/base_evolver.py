@@ -560,6 +560,7 @@ class BaseEvolver():
 
             # look at individual node hyper_parameters
             for node in ind.graph.nodes:
+                print(node.method_class)
                 print(node.hyperparameters)
 
         print('-'*100)
