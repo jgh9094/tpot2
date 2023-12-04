@@ -529,6 +529,18 @@ class BaseEvolver():
         self.generation += 1
 
     def generate_offspring(self, ): #your EA Algorithm goes here
+
+        print('CURRENT POPULATION')
+        for ind in self.population.population:
+            print(ind)
+
+            # look at individual node hyper_parameters
+            for node in ind.graph.nodes:
+                print(node.method_class)
+                print(node.hyperparameters)
+
+        print('-'*100)
+
         parents = self.population.parent_select(selector=self.parent_selector, weights=self.objective_function_weights, columns_names=self.objective_names, k=self.cur_population_size, n_parents=2, rng_=self.rng)
         p = np.array([self.crossover_probability, self.mutate_then_crossover_probability, self.crossover_then_mutate_probability, self.mutate_probability])
         p = p / p.sum()
