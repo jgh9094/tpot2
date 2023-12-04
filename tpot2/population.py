@@ -209,8 +209,7 @@ class Population():
 
         print('update_column')
         print(column_names)
-        for d in data:
-            print(d)
+        print(type(data))
 
 
         self.evaluated_individuals.loc[key,column_names] = data
