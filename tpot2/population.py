@@ -132,7 +132,7 @@ class Population():
         if isinstance(column_names, str): #TODO check this
             column_names = [column_names]
         new_pop = []
-        is_valid = lambda ind: ind.unique_id() not in self.evaluated_individuals.index or invalid_value not in self.evaluated_individuals.loc[ind.unique_id(),column_names].to_list()
+        is_valid = lambda ind: invalid_value not in self.evaluated_individuals.loc[ind.unique_id(),column_names].to_list()
         self.population = [ind for ind in self.population if is_valid(ind)]
 
 
