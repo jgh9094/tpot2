@@ -573,7 +573,7 @@ class BaseEvolver():
     def get_selection_scores(self, budget=None):
         cur_pop = np.array(self.population.population)
 
-        scores, start_times, end_times = tpot2.utils.eval_utils.parallel_eval_objective_list2(cur_pop, self.selection_objectives_functions, verbose=self.verbose, max_eval_time_seconds=self.max_eval_time_seconds, budget=budget, n_expected_columns=len(self.objective_names), client=self._client, **self.objective_kwargs)
+        scores, start_times, end_times = tpot2.utils.eval_utils.parallel_eval_objective_list2(cur_pop, self.selection_objectives_functions, verbose=self.verbose, max_eval_time_seconds=self.max_eval_time_seconds, budget=budget, n_expected_columns=len(self.selection_objective_functions_weights), client=self._client, **self.objective_kwargs)
 
         return scores
 
