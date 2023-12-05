@@ -207,14 +207,6 @@ class Population():
             else:
                 key = individual
 
-        print('update_column')
-
-        if column_names == ['log_loss', 'roc_auc_score', 'complexity_scorer']:
-            print(column_names)
-            for d in data:
-                print(d)
-
-
         self.evaluated_individuals.loc[key,column_names] = data
 
 

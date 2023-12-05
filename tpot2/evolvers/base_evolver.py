@@ -364,7 +364,6 @@ class BaseEvolver():
                     self.generation = self.population.evaluated_individuals['Generation'].max() + 1 #TODO check if this is empty?
 
         init_names = self.objective_names
-        print('INITIAL POPULATION')
         if self.budget_range is not None:
             init_names = init_names + ["Budget"]
         if self.population is None:
@@ -372,8 +371,6 @@ class BaseEvolver():
             initial_population = [next(self.individual_generator) for _ in range(self.cur_population_size)]
             self.population.add_to_population(initial_population, self.rng)
             self.population.update_column(self.population.population, column_names="Generation", data=self.generation)
-
-        print('-'*100)
 
         if selection_objectives_functions is not None:
             self.selection_objectives_functions = selection_objectives_functions
@@ -553,17 +550,6 @@ class BaseEvolver():
         self.generation += 1
 
     def generate_offspring(self, ): #your EA Algorithm goes here
-
-        print('CURRENT POPULATION')
-        for ind in self.population.population:
-            print(ind)
-
-            # look at individual node hyper_parameters
-            for node in ind.graph.nodes:
-                print(node.method_class)
-                print(node.hyperparameters)
-
-        print('-'*100)
 
         selection_scores = self.get_selection_scores()
         self.collect_data(sel_scores=selection_scores)
@@ -849,16 +835,6 @@ class BaseEvolver():
 
     def unique_objectives(self, sel_scores):
         final = 0
-
-        if len(self.population.population) != len(sel_scores):
-            print('len(self.population.population) != len(sel_scores)')
-            print('len(self.population.population):',len(self.population.population))
-            print('len(sel_scores),',len(sel_scores))
-            exit(0)
-
-        print('sel_scores:')
-        for score in sel_scores:
-            print(score)
 
         for obj in range(len(sel_scores[0])):
             cnt = 0
