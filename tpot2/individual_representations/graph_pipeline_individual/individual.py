@@ -528,6 +528,7 @@ class GraphIndividual(BaseIndividual):
         rng = np.random.default_rng(rng_)
         rng.shuffle(self.mutate_methods_list)
         for mutate_method in self.mutate_methods_list:
+            # print(' mutation:', mutate_method.__name__)
             if mutate_method(rng_=rng):
                 self._merge_duplicated_nodes()
 
@@ -550,9 +551,9 @@ class GraphIndividual(BaseIndividual):
                         except:
                             pass
 
-                return True
+                return True, mutate_method.__name__
 
-        return False
+        return False, "NONE"
 
     def _mutate_row_subsets(self, rng_=None):
         rng = np.random.default_rng(rng_)
@@ -1173,7 +1174,7 @@ class GraphIndividual(BaseIndividual):
                 types['leaf'].add(node.method_class.__name__)
             else: #inner
                 types['inner'].add(node.method_class.__name__)
-                
+
         return types
 
 
