@@ -136,6 +136,14 @@ class Population():
         self.population = [ind for ind in self.population if is_valid(ind)]
 
 
+        # if invalid_value == 'INVALID':
+        #     print('remove_invalid_from_population')
+        #     for sol in self.population:
+        #         print(sol)
+        #         print('-'*100)
+        #     print()
+
+
 
     # takes the list of individuals and adds it to the live population list.
     # if keep_repeats is False, repeated individuals are not added to the population
@@ -165,13 +173,18 @@ class Population():
         for individual in individuals:
             key = individual.unique_id()
 
+            # out3.txt
+            # print(individual)
+            # print(key.key)
             if key not in self.evaluated_individuals.index: #If its new, we always add it
+                # print('TRUE')
                 self.evaluated_individuals.loc[key] = np.nan
                 self.evaluated_individuals.loc[key,"Individual"] = copy.deepcopy(individual)
                 self.population.append(individual)
                 new_individuals.append(individual)
 
             else:#If its old
+                # print('FALSE')
                 if keep_repeats: #If we want to keep repeats, we add it
                     self.population.append(individual)
                     new_individuals.append(individual)
@@ -186,7 +199,7 @@ class Population():
                             self.population.append(individual)
                             new_individuals.append(individual)
                             break
-
+        print()
         return new_individuals
 
 
@@ -338,8 +351,9 @@ class Population():
             #TODO put this loop in population class
             if var_op == "mutate":
                 mutation_op = rng.choice(mutation_functions, p=mutation_function_weights)
-                all_offspring.append(copy_and_mutate(parents[0], mutation_op, rng_=rng))
-                chosen_ops.append(mutation_op.__name__)
+                off, name = copy_and_mutate(parents[0], mutation_op, rng_=rng)
+                all_offspring.append(off)
+                chosen_ops.append(name)
 
 
             elif var_op == "crossover":
@@ -390,6 +404,11 @@ class Population():
 
 
             new_offspring.append(offspring)
+
+            # print('  parents:',parents[0])
+            # print('offspring:',offspring)
+            # print(' mutation:', var_op)
+            # print('-'*100)
 
             # else:
                 # new_offspring.append(offspring)
@@ -465,10 +484,10 @@ def copy_and_change(parents, var_op, rng_=None):
 def copy_and_mutate(parents, var_op, rng_=None):
     rng = np.random.default_rng(rng_)
     offspring = copy.deepcopy(parents)
-    var_op(offspring, rng_=rng)
+    _, name = var_op(offspring, rng_=rng)
     if isinstance(offspring, collections.abc.Iterable):
         offspring = offspring[0]
-    return offspring
+    return offspring, name
 
 def copy_and_crossover(parents, var_op, rng_=None):
     rng = np.random.default_rng(rng_)
