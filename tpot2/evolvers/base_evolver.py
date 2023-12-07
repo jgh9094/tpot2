@@ -551,6 +551,9 @@ class BaseEvolver():
 
     def generate_offspring(self, ): #your EA Algorithm goes here
 
+        # print(self.population.evaluated_individuals[['Individual','log_loss']].to_string(index=False))
+        # print('-'*100)
+
         selection_scores = self.get_selection_scores()
         self.collect_data(sel_scores=selection_scores)
 
@@ -565,6 +568,14 @@ class BaseEvolver():
                 parents[i] = parents[i][0] #mutations take a single individual
 
         offspring = self.population.create_offspring2(parents, var_op_list, self.mutation_functions, self.mutation_function_weights, self.crossover_functions, self.crossover_function_weights, add_to_population=False, keep_repeats=False, mutate_until_unique=True, rng_=self.rng)
+
+        # out2.txt
+        # print('offspring')
+        # for off in offspring:
+        #     print(off.__str__())
+
+        # print()
+
         # self.population.add_to_population_j(offspring)
         self.population.set_population(offspring)
         self.population.update_column(offspring, column_names="Generation", data=self.generation, )
@@ -636,6 +647,8 @@ class BaseEvolver():
     def evaluate_population_full(self, budget=None):
         individuals_to_evaluate = self.get_unevaluated_individuals(self.objective_names, budget=budget,)
 
+        print('INDIVIDUAL TO EVALUATE:', len(individuals_to_evaluate))
+
         #print("evaluating this many individuals: ", len(individuals_to_evaluate))
 
         if len(individuals_to_evaluate) == 0:
@@ -678,9 +691,26 @@ class BaseEvolver():
                 #Individuals are unevaluated if we have a higher budget OR if any of the objectives are nan
                 unevaluated_filter = lambda i: any(offspring_scores.loc[offspring_scores.index[i]][column_names].isna()) or (offspring_scores.loc[offspring_scores.index[i]]["Budget"] < budget)
             else:
-                offspring_scores = self.population.get_column(cur_pop, column_names=column_names, to_numpy=False)
+                offspring_scores = self.population.get_column(cur_pop, column_names=column_names + ["Individual"], to_numpy=False)
+                # print('offspring_scores:') # PRINT SCORES AND ACTUAL PIPELINES AND SEE IF THERE IS ANOTHER SIMILAR PIPELINE PREVIOUSLY FOUND AND IF INVALID
+                # print(offspring_scores.columns)
+
+                # i = 0
+                # for sol,score,indx in zip(offspring_scores['Individual'].to_list(), offspring_scores['log_loss'].to_list(), offspring_scores.index.to_list()):
+                    # print(i,':',score, sol)
+                    # print(indx)
+                    # for n in sol.graph.nodes:
+                    #     print(n.method_class)
+                    #     print(n.hyperparameters)
+
+                    # print('-'*100)
+                    # i += 1
+
                 unevaluated_filter = lambda i: any(offspring_scores.loc[offspring_scores.index[i]][column_names].isna())
             unevaluated_individuals_this_step = [i for i in range(len(cur_pop)) if unevaluated_filter(i)]
+            # print('unevaluated_individuals_this_step')
+            # print(unevaluated_individuals_this_step)
+            # print()
             return cur_pop[unevaluated_individuals_this_step]
 
         else: #if column names are not in the evaluated_individuals, then we have not evaluated any individuals yet
@@ -824,7 +854,7 @@ class BaseEvolver():
         self.data_recorder['uni_inner_nodes'].append(inner)
         self.data_recorder['uni_leaf_nodes'].append(leaf)
         self.data_recorder['uni_sel_obj'].append(self.unique_objectives(sel_scores=sel_scores))
-        self.data_recorder['max_sel_obj'].append(max([sum(x)/len(x) for x in sel_scores]))
+        self.data_recorder['max_sel_obj'].append(self.maximum_objective_score(sel_scores=sel_scores))
 
         for indx,obj in enumerate(self.objective_names):
             data = []
@@ -847,6 +877,15 @@ class BaseEvolver():
                 final += 1
 
         return final / len(sel_scores[0])
+
+    def maximum_objective_score(self, sel_scores):
+        scores = []
+        for x in sel_scores:
+            if x[0] is 'INVALID' or x[0] is 'TIMEOUT':
+                continue
+            scores.append(sum(x)/len(x))
+
+        return max(scores)
 
     def unique_node_types(self):
         types = {'root': set(), 'inner': set(), 'leaf':set()}
