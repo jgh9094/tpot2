@@ -792,21 +792,6 @@ class BaseEvolver():
                             new_population_index = survival_selector(weighted_scores, k=k)
                             cur_individuals = np.array(cur_individuals)[new_population_index]
 
-    def collect_data(self, sel_scores):
-        root,inner,leaf = self.unique_node_types()
-
-        self.data_recorder['gen'].append(self.generation)
-        self.data_recorder['uni_root_nodes'].append(root)
-        self.data_recorder['uni_inner_nodes'].append(inner)
-        self.data_recorder['uni_leaf_nodes'].append(leaf)
-
-        for indx,obj in enumerate(self.objective_names):
-            data = []
-            for pipe_line in self.population.population:
-                data.append(self.population.get_column(pipe_line,obj,to_numpy=False) * self.objective_function_weights[indx])
-
-            self.data_recorder[obj].append(max(data)* self.objective_function_weights[indx])
-
     def collect_data(self):
         root,inner,leaf = self.unique_node_types()
 
@@ -821,15 +806,6 @@ class BaseEvolver():
                 data.append(self.population.get_column(pipe_line,obj,to_numpy=False) * self.objective_function_weights[indx])
 
             self.data_recorder[obj].append(max(data)* self.objective_function_weights[indx])
-
-    def maximum_objective_score(self, sel_scores):
-        scores = []
-        for x in sel_scores:
-            if x[0] is 'INVALID' or x[0] is 'TIMEOUT':
-                continue
-            scores.append(sum(x)/len(x))
-
-        return max(scores)
 
     def unique_node_types(self):
         types = {'root': set(), 'inner': set(), 'leaf':set()}
