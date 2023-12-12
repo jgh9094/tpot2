@@ -19,6 +19,7 @@ from dask.distributed import LocalCluster
 from tpot2.selectors import survival_select_NSGA2, tournament_selection_dominated
 import math
 from tpot2.utils.utils import get_thresholds, beta_interpolation, remove_items, equalize_list
+import pandas as pd
 
 def ind_mutate(ind, rng_):
     rng = np.random.default_rng(rng_)
@@ -485,6 +486,7 @@ class BaseEvolver():
                     pbar.update(1)
 
                 if generations is not None and gen >= generations:
+                    self.collect_data()
                     done = True
 
         except KeyboardInterrupt:
@@ -505,6 +507,8 @@ class BaseEvolver():
             self._cluster.close()
 
         tpot2.utils.get_pareto_frontier(self.population.evaluated_individuals, column_names=self.objective_names, weights=self.objective_function_weights, invalid_values=["TIMEOUT","INVALID"])
+
+        self.data_df = pd.DataFrame.from_dict(self.data_recorder,orient='index').transpose()
 
     def step(self,):
         if self.population_size_list is not None:
