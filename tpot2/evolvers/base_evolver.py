@@ -554,6 +554,7 @@ class BaseEvolver():
 
         offspring = self.population.create_offspring2(parents, var_op_list, self.mutation_functions, self.mutation_function_weights, self.crossover_functions, self.crossover_function_weights, add_to_population=True, keep_repeats=False, mutate_until_unique=True, rng_=self.rng)
 
+        self.population.set_population(offspring)
         self.population.update_column(offspring, column_names="Generation", data=self.generation, )
 
     # Gets a list of unevaluated individuals in the livepopulation, evaluates them, and removes failed attempts
