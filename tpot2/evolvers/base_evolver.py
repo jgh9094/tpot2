@@ -368,6 +368,13 @@ class BaseEvolver():
             self.population.update_column(self.population.population, column_names="Generation", data=self.generation)
 
 
+        self.data_df = None
+        self.data_recorder = {'gen':[],'uni_root_nodes':[],'uni_inner_nodes':[],'uni_leaf_nodes':[]}
+
+        for obj in self.objective_names:
+            self.data_recorder.update({obj:[]})
+
+
     def optimize(self, generations=None):
 
         if self.client is not None: #If user passed in a client manually
@@ -529,6 +536,9 @@ class BaseEvolver():
         self.generation += 1
 
     def generate_offspring(self, ): #your EA Algorithm goes here
+
+        self.collect_data()
+
         parents = self.population.parent_select(selector=self.parent_selector, weights=self.objective_function_weights, columns_names=self.objective_names, k=self.cur_population_size, n_parents=2, rng_=self.rng)
         p = np.array([self.crossover_probability, self.mutate_then_crossover_probability, self.crossover_then_mutate_probability, self.mutate_probability])
         p = p / p.sum()
@@ -541,13 +551,6 @@ class BaseEvolver():
         offspring = self.population.create_offspring2(parents, var_op_list, self.mutation_functions, self.mutation_function_weights, self.crossover_functions, self.crossover_function_weights, add_to_population=True, keep_repeats=False, mutate_until_unique=True, rng_=self.rng)
 
         self.population.update_column(offspring, column_names="Generation", data=self.generation, )
-
-
-
-
-
-
-
 
     # Gets a list of unevaluated individuals in the livepopulation, evaluates them, and removes failed attempts
     # TODO This could probably be an independent function?
@@ -784,3 +787,51 @@ class BaseEvolver():
 
                             new_population_index = survival_selector(weighted_scores, k=k)
                             cur_individuals = np.array(cur_individuals)[new_population_index]
+
+    def collect_data(self, sel_scores):
+        root,inner,leaf = self.unique_node_types()
+
+        self.data_recorder['gen'].append(self.generation)
+        self.data_recorder['uni_root_nodes'].append(root)
+        self.data_recorder['uni_inner_nodes'].append(inner)
+        self.data_recorder['uni_leaf_nodes'].append(leaf)
+
+        for indx,obj in enumerate(self.objective_names):
+            data = []
+            for pipe_line in self.population.population:
+                data.append(self.population.get_column(pipe_line,obj,to_numpy=False) * self.objective_function_weights[indx])
+
+            self.data_recorder[obj].append(max(data)* self.objective_function_weights[indx])
+
+    def collect_data(self):
+        root,inner,leaf = self.unique_node_types()
+
+        self.data_recorder['gen'].append(self.generation)
+        self.data_recorder['uni_root_nodes'].append(root)
+        self.data_recorder['uni_inner_nodes'].append(inner)
+        self.data_recorder['uni_leaf_nodes'].append(leaf)
+
+        for indx,obj in enumerate(self.objective_names):
+            data = []
+            for pipe_line in self.population.population:
+                data.append(self.population.get_column(pipe_line,obj,to_numpy=False) * self.objective_function_weights[indx])
+
+            self.data_recorder[obj].append(max(data)* self.objective_function_weights[indx])
+
+    def maximum_objective_score(self, sel_scores):
+        scores = []
+        for x in sel_scores:
+            if x[0] is 'INVALID' or x[0] is 'TIMEOUT':
+                continue
+            scores.append(sum(x)/len(x))
+
+        return max(scores)
+
+    def unique_node_types(self):
+        types = {'root': set(), 'inner': set(), 'leaf':set()}
+
+        # go through each solution and get the type it is
+        for sol in self.population.population:
+            types = sol.node_type_dict(types=types)
+
+        return len(types['root']), len(types['inner']), len(types['leaf'])
