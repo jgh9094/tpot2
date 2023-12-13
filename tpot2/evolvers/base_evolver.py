@@ -551,13 +551,10 @@ class BaseEvolver():
 
     def generate_offspring(self, ): #your EA Algorithm goes here
 
-        # print(self.population.evaluated_individuals[['Individual','log_loss']].to_string(index=False))
-        # print('-'*100)
-
         selection_scores = self.get_selection_scores()
-        self.collect_data(sel_scores=selection_scores)
-
-        parents = self.population.parent_select_j(selector=self.parent_selector, scores=selection_scores, k=self.cur_population_size, n_parents=1, rng_=self.rng)
+        clean_scores = self.clean_scores(selection_scores=selection_scores)
+        self.collect_data(sel_scores=clean_scores)
+        parents = self.population.parent_select_j(selector=self.parent_selector, scores=clean_scores, k=self.cur_population_size, n_parents=1, rng_=self.rng)
 
         p = np.array([self.crossover_probability, self.mutate_then_crossover_probability, self.crossover_then_mutate_probability, self.mutate_probability])
         p = p / p.sum()
@@ -569,14 +566,6 @@ class BaseEvolver():
 
         offspring = self.population.create_offspring2(parents, var_op_list, self.mutation_functions, self.mutation_function_weights, self.crossover_functions, self.crossover_function_weights, add_to_population=False, keep_repeats=False, mutate_until_unique=True, rng_=self.rng)
 
-        # out2.txt
-        # print('offspring')
-        # for off in offspring:
-        #     print(off.__str__())
-
-        # print()
-
-        # self.population.add_to_population_j(offspring)
         self.population.set_population(offspring)
         self.population.update_column(offspring, column_names="Generation", data=self.generation, )
 
@@ -588,7 +577,18 @@ class BaseEvolver():
 
         return scores
 
+    def clean_scores(self, selection_scores):
+        # get rid of 'INVALID' or 'TIMEOUT'
+        clean_scores = []
+        for score in selection_scores:
+            if isinstance(score,(list)):
+                if 'INVALID' in score or 'TIMEOUT' in score:
+                    clean_scores.append(np.array([-1.0] * len(score)))
+                    continue
 
+            clean_scores.append(score)
+
+        return clean_scores
 
 
     # Gets a list of unevaluated individuals in the livepopulation, evaluates them, and removes failed attempts
@@ -881,7 +881,7 @@ class BaseEvolver():
     def maximum_objective_score(self, sel_scores):
         scores = []
         for x in sel_scores:
-            if x[0] is 'INVALID' or x[0] is 'TIMEOUT':
+            if x[0] == -1.0:
                 continue
             scores.append(sum(x)/len(x))
 
