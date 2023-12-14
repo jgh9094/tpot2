@@ -497,7 +497,8 @@ class BaseEvolver():
                 if generations is not None and gen >= generations:
                     # get selection scores here one more time to get the final pop
                     selection_scores = self.get_selection_scores()
-                    self.collect_data(sel_scores=selection_scores)
+                    clean_scores = self.clean_scores(selection_scores=selection_scores)
+                    self.collect_data(sel_scores=clean_scores)
                     done = True
 
         except KeyboardInterrupt:
