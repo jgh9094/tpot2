@@ -624,7 +624,7 @@ class TPOTEstimator(BaseEstimator):
 
             #TODO: check if there are missing values in X before imputation. If not, don't include imputation in pipeline. Check if there are categorical columns. If not, don't include one hot encoding in pipeline
             else: #if self.preprocessing is True or not a sklearn estimator
-                
+
                 pipeline_steps = []
 
                 if self.categorical_features is not None: #if categorical features are specified, use those
@@ -643,11 +643,11 @@ class TPOTEstimator(BaseEstimator):
                             pipeline_steps.append(("impute_numeric", tpot2.builtin_modules.ColumnSimpleImputer("all", strategy='mean')))
                     else:
                         pipeline_steps.append(("impute_numeric", tpot2.builtin_modules.ColumnSimpleImputer("all", strategy='mean')))
-                            
+
                 self._preprocessing_pipeline = sklearn.pipeline.Pipeline(pipeline_steps)
 
             X = self._preprocessing_pipeline.fit_transform(X, y)
-            
+
         else:
             self._preprocessing_pipeline = None
 
@@ -911,11 +911,31 @@ class TPOTEstimator(BaseEstimator):
         val_scores = self.evaluated_individuals[~self.evaluated_individuals[self.objective_names_for_selection].isin(["TIMEOUT","INVALID"]).any(axis=1)][self.objective_names_for_selection].astype(float)
         weighted_scores = val_scores*self.objective_function_weights
 
-        if self.bigger_is_better:
-            best_idx = weighted_scores[self.objective_names_for_selection[0]].idxmax()
-        else:
-            best_idx = weighted_scores[self.objective_names_for_selection[0]].idxmin()
+        # what is order we filter for the final pipeline
+        filtering_order = []
+        abs_weights = [abs(x) for x in self.objective_function_weights]
 
+        # if all objective weights are the same use the given ordering: scorers + other_objectives
+        if all(x == abs_weights[0] for x in abs_weights):
+            filtering_order = self.objective_names_for_selection
+        # else we order based of weights and order that objectives are given
+        else:
+            filtering_order = [o for _,o in sorted(zip([abs(x) for x in self.objective_function_weights],self.objective_names_for_selection), key=lambda pair: pair[0], reverse = True)]
+
+        # go though each objective and filter individuals
+        for obj in filtering_order:
+            # max or min problem
+            if self.bigger_is_better:
+                weighted_scores = weighted_scores.loc[weighted_scores[obj] == weighted_scores[obj].max()]
+            else:
+                weighted_scores = weighted_scores.loc[weighted_scores[obj] == weighted_scores[obj].min()]
+                
+            # if there is only one individual left we can stop
+            if len(weighted_scores) == 1:
+                break
+
+        # grab a random solution from what's left: random_state is locked in
+        best_idx = weighted_scores.sample(n=1, random_state=self.random_state).index.to_list()[0]
         best_individual = self.evaluated_individuals.loc[best_idx]['Individual']
         self.selected_best_score =  self.evaluated_individuals.loc[best_idx]
 
