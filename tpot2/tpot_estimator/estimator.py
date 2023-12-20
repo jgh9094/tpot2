@@ -570,7 +570,7 @@ class TPOTEstimator(BaseEstimator):
         set_dask_settings()
 
 
-    def fit(self, X, y):
+    def fit(self, X, y, X_original, y_original):
         if self.client is not None: #If user passed in a client manually
            _client = self.client
         else:
@@ -614,9 +614,6 @@ class TPOTEstimator(BaseEstimator):
             else:
                 X, X_val, y, y_val = train_test_split(X, y, test_size=self.validation_fraction, random_state=self.random_state)
 
-
-        X_original = X
-        y_original = y
         if isinstance(self.cv, int) or isinstance(self.cv, float):
             n_folds = self.cv
         else:
