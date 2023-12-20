@@ -924,12 +924,13 @@ class TPOTEstimator(BaseEstimator):
 
         # go though each objective and filter individuals
         for obj in filtering_order:
+            print('filtering by:', obj)
             # max or min problem
             if self.bigger_is_better:
                 weighted_scores = weighted_scores.loc[weighted_scores[obj] == weighted_scores[obj].max()]
             else:
                 weighted_scores = weighted_scores.loc[weighted_scores[obj] == weighted_scores[obj].min()]
-                
+
             # if there is only one individual left we can stop
             if len(weighted_scores) == 1:
                 break
