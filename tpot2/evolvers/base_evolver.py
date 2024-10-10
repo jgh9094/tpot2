@@ -199,8 +199,8 @@ class BaseEvolver():
         selection_evaluation_pruning : list, default=None
             A lower and upper percent of the population size to select each round of CV.
             Values between 0 and 1.
-            Selects a percentage of the population to evaluate at each step of the evaluation. 
-            For example, one strategy is to evaluate different steps of cross validation one at a time, and only select the best N individuals for subsequent steps. 
+            Selects a percentage of the population to evaluate at each step of the evaluation.
+            For example, one strategy is to evaluate different steps of cross validation one at a time, and only select the best N individuals for subsequent steps.
             This can save computation by not evaluating all individuals for all steps of cross validation. By default this selection is done with the NSGA2 selector.
         selection_evaluation_scaling : float, default=0.5
             A scaling factor to use when determining how fast we move the threshold moves from the start to end percentile.
@@ -231,14 +231,14 @@ class BaseEvolver():
                 Will be used to create and lock in Generator instance with 'numpy.random.default_rng()'. Note this will be the same Generator passed in.
             - None
                 Will be used to create Generator for 'numpy.random.default_rng()' where a fresh, unpredictable entropy will be pulled from the OS
-        
+
         Attributes
         ----------
         population : tpot2.Population
             The population of individuals.
             Use population.population to access the individuals in the current population.
             Use population.evaluated_individuals to access a data frame of all individuals that have been explored.
-        
+
         """
 
         self.rng = np.random.default_rng(rng)
@@ -406,14 +406,14 @@ class BaseEvolver():
 
     def optimize(self, generations=None):
         """
-        Creates an initial population and runs the evolutionary algorithm for the given number of generations. 
+        Creates an initial population and runs the evolutionary algorithm for the given number of generations.
         If generations is None, will use self.generations.
 
         Parameters
         ----------
         generations : int, default=None
             Number of generations to run. If None, will use self.generations.
-        
+
         """
 
         if self.client is not None: #If user passed in a client manually
@@ -551,7 +551,7 @@ class BaseEvolver():
     def step(self,):
         """
         Runs a single generation of the evolutionary algorithm. This includes selecting individuals for survival, generating offspring, and evaluating the offspring.
-        
+
         """
 
 
@@ -585,7 +585,7 @@ class BaseEvolver():
 
     def generate_offspring(self, ): #your EA Algorithm goes here
         """
-        Create population_size new individuals from the current population. 
+        Create population_size new individuals from the current population.
         This includes selecting parents, applying mutation and crossover, and adding the new individuals to the population.
         """
         parents = self.population.parent_select(selector=self.parent_selector, weights=self.objective_function_weights, columns_names=self.objective_names, k=self.cur_population_size, n_parents=2, rng=self.rng)
@@ -597,8 +597,9 @@ class BaseEvolver():
             if op == "mutate":
                 parents[i] = parents[i][0] #mutations take a single individual
 
-        offspring = self.population.create_offspring2(parents, var_op_list, self.mutation_functions, self.mutation_function_weights, self.crossover_functions, self.crossover_function_weights, add_to_population=True, keep_repeats=False, mutate_until_unique=True, rng=self.rng)
+        offspring = self.population.create_offspring2(parents, var_op_list, self.mutation_functions, self.mutation_function_weights, self.crossover_functions, self.crossover_function_weights, add_to_population=True, keep_repeats=True, mutate_until_unique=False, rng=self.rng)
 
+        self.population.set_population(offspring, rng=self.rng, keep_repeats=True)
         self.population.update_column(offspring, column_names="Generation", data=self.generation, )
 
     # Gets a list of unevaluated individuals in the livepopulation, evaluates them, and removes failed attempts
@@ -729,11 +730,11 @@ class BaseEvolver():
 
     def evaluate_population_selection_early_stop(self,survival_counts, thresholds=None, budget=None):
         """
-        This function tries to save computation by partially evaluating the individuals and then selecting which individuals to evaluate further based on the results of the partial evaluation. 
-        
+        This function tries to save computation by partially evaluating the individuals and then selecting which individuals to evaluate further based on the results of the partial evaluation.
+
         Two strategies are implemented:
-            1.  Selection early stopping: Selects a percentage of the population to evaluate at each step of the evaluation. 
-                for example, one strategy is to evaluate different steps of cross validation one at a time, and only select the best N individuals for subsequent steps. 
+            1.  Selection early stopping: Selects a percentage of the population to evaluate at each step of the evaluation.
+                for example, one strategy is to evaluate different steps of cross validation one at a time, and only select the best N individuals for subsequent steps.
                 This can save computation by not evaluating all individuals for all steps of cross validation. By default this selection is done with the NSGA2 selector.
             2.  Threshold early stopping: At each step of the evaluation, a threshold is calculated based on the previous evaluations. All individuals that are below the performance threshold are not evaluated for further steps.
                 For example, if the threshold is set to the 90th percentile of the previous evaluations, all individuals that are below the 90th percentile are not evaluated further. This can save computation by not evaluating all individuals for all steps of cross validation.
@@ -798,7 +799,7 @@ class BaseEvolver():
                                     scheduled_timeout_time=self.scheduled_timeout_time,
                                     **self.objective_kwargs,
                                     )
-            
+
             self.population.update_column(unevaluated_individuals_this_step, column_names=this_step_names, data=scores)
             self.population.update_column(unevaluated_individuals_this_step, column_names="Submitted Timestamp", data=start_times)
             self.population.update_column(unevaluated_individuals_this_step, column_names="Completed Timestamp", data=end_times)
@@ -843,7 +844,7 @@ class BaseEvolver():
             for i in range(len(offspring_scores)):
                 if any(np.isnan(offspring_scores[i])):
                     invalids.append(i)
-            
+
             cur_individuals = remove_items(cur_individuals,invalids)
             offspring_scores = remove_items(offspring_scores,invalids)
 
