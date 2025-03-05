@@ -425,6 +425,8 @@ class TPOTEstimator(BaseEstimator):
         # save random state passed to us for other functions that use random_state
         self.random_state = random_state
 
+        print('USING 3-STEP-EA')
+
         #Initialize other used params
 
 
